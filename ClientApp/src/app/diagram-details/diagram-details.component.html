@@ -1,0 +1,364 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12" *ngIf="!isLoading">
+            <h1>{{responseData.uploadName}}</h1>
+        </div>
+    </div>
+    <div *ngIf="isLoading" class="row">
+        <div class="col-12">
+
+            <mat-spinner></mat-spinner>
+
+        </div>
+    </div>
+    <div class="row" *ngIf="!isLoading">
+        <div class="col-12">
+            <div class="row">
+                <div class="col-12">
+                    <h2>{{responseData.diagramName}}</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <mat-accordion class="example-headers-align" multi>
+                        <mat-expansion-panel>
+                            <mat-expansion-panel-header>
+                                <mat-panel-title>
+                                    Querying {{responseData.diagramName}}
+                                </mat-panel-title>
+                            </mat-expansion-panel-header>
+                            <div class="row">
+                                <div class="col-4">
+                                    <mat-form-field class="example-full-width">
+                                        <mat-label>Metric</mat-label>
+                                        <input type="text" placeholder="Search for metric" aria-label="Number" matInput
+                                            [formControl]="myControl" [matAutocomplete]="auto">
+                                        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete"
+                                            [displayWith]="getOptionText"
+                                            (optionSelected)='getMetric($event.option.value)'>
+                                            <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+                                                <span class="option-title"> {{option.metricCode}}</span><br />
+                                                <span class="option-description">{{option.metricName}}</span>
+                                            </mat-option>
+                                        </mat-autocomplete>
+                                    </mat-form-field>
+                                </div>
+                                <div class="col-8">
+                                    <button *ngIf="selectedMetric!=null && !isLoadingEvaluate"
+                                        mat-button (click)="evaluate()">
+                                        Evaluate
+                                    </button>
+                                    <mat-spinner *ngIf="isLoadingEvaluate"></mat-spinner>
+                                    <span *ngIf=" !isLoadingEvaluate && isMetricEvaluated">{{evaluatedNumber}}</span>
+                                </div>
+
+
+
+                            </div>
+                            <div class="row" *ngIf="selectedMetric!=null">
+                                <div class="col-12">
+                                    <span class="metric-title">Metric Name: </span><span
+                                        class="metric-description">{{selectedMetric.metricName}}</span><br />
+                                    <br />
+                                    <span class="metric-title">Metric Description: </span><span
+                                        class="metric-description">{{selectedMetric.metricDescription}}</span>
+                                </div>
+                            </div>
+
+
+
+                        </mat-expansion-panel>
+
+
+
+                    </mat-accordion>
+                    <br />
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <mat-card *ngIf="selectedElement !=null" class="element-card">
+                        <mat-card-header>
+                            <mat-card-title>{{selectedElement.sType}}
+                                {{selectedElement.Name!=null?'"'+selectedElement.Name+'"':''}}
+                                {{selectedElement.InstancedClassName?':'+selectedElement.InstancedClassName:''}}
+                            </mat-card-title>
+                            <mat-card-subtitle>{{selectedElement.Visibility}}</mat-card-subtitle>
+                        </mat-card-header>
+
+                        <mat-card-content>
+                            <div *ngIf="selectedElement.Type==umlTypes.Association" class="row">
+                                <div *ngIf="selectedElement.Element1Name" class="col-sm-12 col-md-6">
+                                    <h4><strong>{{selectedElement.sElement1Type}}:</strong>
+                                        {{selectedElement.Element1Name}}</h4>
+                                    <h4 *ngIf="selectedElement.Element1Multiplicity"><strong>Multiplicity:</strong>
+                                        {{selectedElement.Element1Multiplicity}}</h4>
+                                    <h4 *ngIf="selectedElement.Element1Aggregation"><strong>Aggregation:</strong>
+                                        {{selectedElement.Element1Aggregation}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.Element2Name" class="col-sm-12 col-md-6">
+                                    <h4><strong>{{selectedElement.sElement2Type}}:</strong>
+                                        {{selectedElement.Element2Name}}</h4>
+                                    <h4 *ngIf="selectedElement.Element2Multiplicity"><strong>Multiplicity:</strong>
+                                        {{selectedElement.Element2Multiplicity}}</h4>
+                                    <h4 *ngIf="selectedElement.Element2Aggregation"><strong>Aggregation:</strong>
+                                        {{selectedElement.Element2Aggregation}}</h4>
+                                </div>
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.Generalization" class="row">
+                                <div *ngIf="selectedElement.ParentName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Parent</strong></h4>
+                                    <h4>{{selectedElement.sParentType}} {{selectedElement.ParentName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.ChildName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Child</strong></h4>
+                                    <h4>{{selectedElement.sChildType}} {{selectedElement.ChildName}}</h4>
+                                </div>
+
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.Dependency || selectedElement.Type==umlTypes.Usage || selectedElement.Type==umlTypes.Realization"
+                                class="row">
+                                <div *ngIf="selectedElement.SupplierName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Supplier</strong></h4>
+                                    <h4>{{selectedElement.sSupplierType}}
+                                        {{selectedElement.SupplierName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.ClientName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Client</strong></h4>
+                                    <h4>{{selectedElement.sClientType}}
+                                        {{selectedElement.ClientName}}</h4>
+                                </div>
+
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.Transition" class="row">
+                                <div *ngIf="selectedElement.SourceName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Source</strong></h4>
+                                    <h4>{{selectedElement.sSourceType}}
+                                        {{selectedElement.SourceName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.TargetName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Target</strong></h4>
+                                    <h4>{{selectedElement.sTargetType}}
+                                        {{selectedElement.TargetName}}</h4>
+                                </div>
+
+                            </div>
+
+                            <div *ngIf="selectedElement.Type==umlTypes.PackageImport" class="row">
+                                <div class="col-12" *ngIf="selectedElement.ImportedPackageName">
+                                    <h4><strong>Package</strong></h4>
+                                    <h4>{{selectedElement.ImportedPackageName}}</h4>
+                                </div>
+
+
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.PackageMerge" class="row">
+                                <div class="col-12" *ngIf="selectedElement.MergedPackageName">
+                                    <h4><strong>Package</strong></h4>
+                                    <h4>{{selectedElement.MergedPackageName}}</h4>
+                                </div>
+
+
+                            </div>
+                            <div *ngIf="selectedElement.Kind" class="col-sm-12 col-md-12">
+                                <strong>Kind:</strong> {{selectedElement.Kind}}
+                            </div>
+                            <div *ngIf="selectedElement.Trigger" class="col-sm-12 col-md-12">
+                                <strong>Trigger:</strong> {{selectedElement.Trigger}}
+                            </div>
+                            <div *ngIf="selectedElement.Guard" class="col-sm-12 col-md-12">
+                                <strong>Guard:</strong> {{selectedElement.Guard}}
+                            </div>
+                            <div *ngIf="selectedElement.Entry" class="col-sm-12 col-md-12">
+                                <strong>Entry:</strong> {{selectedElement.Entry}}
+                            </div>
+                            <div *ngIf="selectedElement.Do" class="col-sm-12 col-md-12">
+                                <strong>Do:</strong> {{selectedElement.Do}}
+                            </div>
+                            <div *ngIf="selectedElement.Exit" class="col-sm-12 col-md-12">
+                                <strong>Exit:</strong> {{selectedElement.Exit}}
+                            </div>
+
+                            <div *ngIf="selectedElement.Type==umlTypes.Message" class="row">
+                                <div *ngIf="selectedElement.MessgaeKind" class="col-sm-12 col-md-12">
+                                    <strong>Messgae Kind:</strong> {{selectedElement.MessgaeKind}}
+                                </div>
+                                <div *ngIf="selectedElement.MessgaeSort" class="col-sm-12 col-md-12">
+                                    <strong>Messgae Sort:</strong> {{selectedElement.MessgaeSort}}
+                                </div>
+                                <div *ngIf="selectedElement.ElementFromName" class="col-sm-12 col-md-6">
+                                    <h4><strong>From</strong></h4>
+                                    <h4>{{selectedElement.sElementFromType}} {{selectedElement.ElementFromName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.ElementToName" class="col-sm-12 col-md-6">
+                                    <h4><strong>To</strong></h4>
+                                    <h4>{{selectedElement.sElementToType}} {{selectedElement.ElementToName}}</h4>
+                                </div>
+
+
+                            </div>
+                            <h4 *ngIf="selectedElement.ElementName!=null"><strong>Related Element:</strong>
+                                {{selectedElement.ElementName}} ({{selectedElement.sElmenetType}})</h4>
+                            <h4 *ngIf="selectedElement.StereoType!=null"><strong>Stereo Type:</strong>
+                                {{selectedElement.StereoType}}</h4>
+                            <h4 *ngIf="selectedElement.InteractionOperator!=null"><strong>Interaction Operator:
+                                </strong>
+                                {{selectedElement.InteractionOperator}}</h4>
+                            <h4 *ngIf="selectedElement.Expression!=null"><strong>Expression:
+                                </strong>
+                                {{selectedElement.Expression}}</h4>
+                            <mat-accordion class="example-headers-align" multi>
+                                <mat-expansion-panel *ngIf="selectedElement.Attributes">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Attributes
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div *ngIf="selectedElement.Type != umlTypes.Object">
+                                        <h4 *ngFor="let attribute of selectedElement.Attributes">
+                                            {{attribute.Visibility}} {{attribute.DataTypeName}}
+                                            {{attribute.IsArray?'[]':''}}
+                                            {{attribute.Name}}
+                                        </h4>
+                                    </div>
+                                    <div *ngIf="selectedElement.Type == umlTypes.Object">
+                                        <h4 *ngFor="let attribute of selectedElement.Attributes">
+                                            {{attribute.Visibility}} {{attribute.DataTypeName}}
+                                            {{attribute.Name}}
+                                            {{!attribute.isBodyValue?'=':''}} {{attribute.Value}}
+                                        </h4>
+                                    </div>
+
+                                </mat-expansion-panel>
+                                <mat-expansion-panel *ngIf="selectedElement.Operations">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Operations
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+
+                                    <h4 *ngFor="let operation of selectedElement.Operations">
+                                        {{operation.Visibility}} {{operation.DataTypeName}}
+                                        {{operation.IsArray?'[]':''}}
+                                        {{operation.Name}}(
+                                        <span *ngFor="let parameter of operation.Parameters; let i = index"
+                                            [attr.data-index]="i">
+                                            {{parameter.Visibility}} {{parameter.DataTypeName}}
+                                            {{parameter.IsArray?'[]':''}} {{parameter.Name}}{{i
+                                            <operation.Parameters.length-1?',':''}} </span>
+                                                )
+                                    </h4>
+
+                                </mat-expansion-panel>
+
+
+                            </mat-accordion>
+
+                        </mat-card-content>
+                        <mat-card-actions>
+
+                        </mat-card-actions>
+                    </mat-card>
+                    <br />
+
+                </div>
+                <div class="col-md-12 col-sm-12" (click)="unselected()" style="overflow: auto;">
+
+                    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+                        <!-- This is the tree node template for leaf nodes -->
+                        <mat-tree-node id="{{node.item.XmiId}}"
+                            class="{{node.selected?'selected-node':''}} {{node.item.IsHighlighted?'highlight-node':''}} tree-node"
+                            *matTreeNodeDef="let node" matTreeNodePadding>
+                            <!-- use a disabled button to provide padding for tree leaf -->
+                            <button mat-icon-button disabled></button>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Outgoing'">
+
+                                east
+
+                            </mat-icon>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Incoming'">
+
+                                west
+
+                            </mat-icon>
+                            {{node.name}}
+                            <button (click)="referenceOtherParty(node)" *ngIf="node.item.IsOtherParty==true"
+                                mat-icon-button [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    source
+                                </mat-icon>
+
+                            </button>
+                            <button (click)="selectTreeNode(node)" *ngIf="node.item.IsElementDetail" mat-icon-button
+                                [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    read_more
+                                </mat-icon>
+
+                            </button>
+                            <button (click)="calculateElementMetric(node)" *ngIf="node.item.Type==umlTypes.Class" mat-icon-button>
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    calculate
+                                </mat-icon>
+
+                            </button>
+                        </mat-tree-node>
+                        <!-- This is the tree node template for expandable nodes -->
+                        <mat-tree-node id="{{node.item.XmiId}}" *matTreeNodeDef="let node;when: hasChild"
+                            class="{{node.selected?'selected-node':''}} {{node.item.IsHighlighted?'highlight-node':''}} tree-node"
+                            matTreeNodePadding>
+                            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                                </mat-icon>
+
+                            </button>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Outgoing'">
+
+                                east
+
+                            </mat-icon>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Incoming'">
+
+                                west
+
+                            </mat-icon>
+                            {{node.name}}
+                            <button (click)="referenceOtherParty(node)" *ngIf="node.item.IsOtherParty==true"
+                                mat-icon-button [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    source
+                                </mat-icon>
+
+                            </button>
+                            <button (click)="selectTreeNode(node)" *ngIf="node.item.IsElementDetail" mat-icon-button
+                                [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    read_more
+                                </mat-icon>
+
+                            </button>
+                            <button (click)="calculateElementMetric(node)" *ngIf="node.item.Type==umlTypes.Class" mat-icon-button>
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    calculate
+                                </mat-icon>
+
+                            </button>
+                        </mat-tree-node>
+                    </mat-tree>
+
+                </div>
+
+            </div>
+
+        </div>
+        <div class="col-12">
+
+
+
+        </div>
+    </div>
+</div>

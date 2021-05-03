@@ -1,0 +1,9 @@
+<h1 mat-dialog-title>Remove {{diagram.uploadName}}</h1>
+<div mat-dialog-content>
+  <p>Are you sure you want to remove {{diagram.uploadName}} ( {{diagram.diagramName}} )?</p>
+  
+</div>
+<div mat-dialog-actions>
+  <button mat-button (click)="onNoClick()" cdkFocusInitial>No Thanks</button>
+  <button mat-button [mat-dialog-close]="diagram">Ok</button>
+</div>

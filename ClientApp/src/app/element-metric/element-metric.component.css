@@ -1,0 +1,26 @@
+
+.mat-option {
+    height: 50px;
+    line-height: 20px;
+}
+
+.option-title {
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.option-description {
+    font-size: 15px;
+}
+
+.metric-title{
+    font-size: 17px;
+    font-weight: bold;
+    color: rgb(182, 74, 12);
+}
+.metric-description{
+    font-size: 15px;
+    color: rgb(182, 74, 12);
+}.example-full-width{
+    width: 100%;
+}

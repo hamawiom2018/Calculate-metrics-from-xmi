@@ -1,0 +1,1127 @@
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1>Upload XMI Form</h1>
+        </div>
+    </div>
+    <div class="row" *ngIf="!isLoading && !uploadResponse.isSuccess">
+        <form class="col-12" [formGroup]="myForm" (ngSubmit)="submit()">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input formControlName="name" id="name" type="text" class="form-control">
+                <div *ngIf="validate && f.name.invalid" class="alert alert-danger">
+                    <div *ngIf="f.name.errors.required">Name is required.</div>
+                    <div *ngIf="f.name.errors.minlength">Name should be 3 character.</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="file">File</label>
+                <div class="custom-file">
+                    <input formControllName="file" type="file" (change)="onFileChange($event)" class="custom-file-input"
+                        id="customFile">
+                    <label class="custom-file-label" for="customFile">
+                        <span *ngIf="f.fileSource.value.name==null">Choose file</span>{{f.fileSource.value.name}}
+                    </label>
+                </div>
+                <div *ngIf="validate && f.file.invalid" class="alert alert-danger">
+                    <div *ngIf="f.file.errors.required">File is required.</div>
+                    <div *ngIf="f.file.errors.xmlExtension">File extension should be XML of XMI.</div>
+                </div>
+                <div *ngIf="!uploadResponse.isSuccess &&uploadResponse.message!=''" class="alert alert-danger">
+                    {{uploadResponse.message}}</div>
+
+            </div>
+            <!--<div class="form-group">
+                <label for="name">XMI Version</label>
+                <select formControlName="xmiVersion"  class="form-control">
+                    <option *ngFor="let version of xmiVersions" value="{{version}}">{{version}}</option>
+                </select>
+                <div *ngIf="validate && f.xmiVersion.invalid" class="alert alert-danger">
+                    <div *ngIf="f.xmiVersion.errors.required">XMI Version is required.</div>
+                </div>
+            </div>-->
+
+            <button class="btn btn-primary" type="submit">Submit</button>
+        </form>
+
+    </div>
+    <div class="row" *ngIf="!isLoading && successUpload">
+        <div class="col-12">
+            <div class="alert alert-success">Diagram Uploaded Successfully</div>
+        </div>
+    </div>
+    <div class="row" *ngIf="!isLoading && uploadResponse.isSuccess && !successUpload">
+        <div class="col-12">
+            <h2>UML Result for {{responseData.name}}</h2><br />
+            <h2>{{responseData.diagramName}}</h2>
+        </div>
+        <div class="col-12">
+            <div class="row">
+                <div class="col-12">
+                    <mat-card *ngIf="selectedElement !=null" class="element-card">
+                        <mat-card-header>
+                            <mat-card-title>{{selectedElement.sType}}
+                                {{selectedElement.Name!=null?'"'+selectedElement.Name+'"':''}}
+                                {{selectedElement.InstancedClassName?':'+selectedElement.InstancedClassName:''}}
+                            </mat-card-title>
+                            <mat-card-subtitle>{{selectedElement.Visibility}}</mat-card-subtitle>
+                        </mat-card-header>
+
+                        <mat-card-content>
+                            <div *ngIf="selectedElement.Type==umlTypes.Association" class="row">
+                                <div *ngIf="selectedElement.Element1Name" class="col-sm-12 col-md-6">
+                                    <h4><strong>{{selectedElement.sElement1Type}}:</strong>
+                                        {{selectedElement.Element1Name}}</h4>
+                                    <h4 *ngIf="selectedElement.Element1Multiplicity"><strong>Multiplicity:</strong>
+                                        {{selectedElement.Element1Multiplicity}}</h4>
+                                    <h4 *ngIf="selectedElement.Element1Aggregation"><strong>Aggregation:</strong>
+                                        {{selectedElement.Element1Aggregation}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.Element2Name" class="col-sm-12 col-md-6">
+                                    <h4><strong>{{selectedElement.sElement2Type}}:</strong>
+                                        {{selectedElement.Element2Name}}</h4>
+                                    <h4 *ngIf="selectedElement.Element2Multiplicity"><strong>Multiplicity:</strong>
+                                        {{selectedElement.Element2Multiplicity}}</h4>
+                                    <h4 *ngIf="selectedElement.Element2Aggregation"><strong>Aggregation:</strong>
+                                        {{selectedElement.Element2Aggregation}}</h4>
+                                </div>
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.Generalization" class="row">
+                                <div *ngIf="selectedElement.ParentName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Parent</strong></h4>
+                                    <h4>{{selectedElement.sParentType}} {{selectedElement.ParentName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.ChildName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Child</strong></h4>
+                                    <h4>{{selectedElement.sChildType}} {{selectedElement.ChildName}}</h4>
+                                </div>
+
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.Dependency || selectedElement.Type==umlTypes.Usage || selectedElement.Type==umlTypes.Realization"
+                                class="row">
+                                <div *ngIf="selectedElement.SupplierName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Supplier</strong></h4>
+                                    <h4>{{selectedElement.sSupplierType}}
+                                        {{selectedElement.SupplierName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.ClientName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Client</strong></h4>
+                                    <h4>{{selectedElement.sClientType}}
+                                        {{selectedElement.ClientName}}</h4>
+                                </div>
+
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.Transition" class="row">
+                                <div *ngIf="selectedElement.SourceName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Source</strong></h4>
+                                    <h4>{{selectedElement.sSourceType}}
+                                        {{selectedElement.SourceName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.TargetName" class="col-sm-12 col-md-6">
+                                    <h4><strong>Target</strong></h4>
+                                    <h4>{{selectedElement.sTargetType}}
+                                        {{selectedElement.TargetName}}</h4>
+                                </div>
+
+                            </div>
+
+                            <div *ngIf="selectedElement.Type==umlTypes.PackageImport" class="row">
+                                <div class="col-12" *ngIf="selectedElement.ImportedPackageName">
+                                    <h4><strong>Package</strong></h4>
+                                    <h4>{{selectedElement.ImportedPackageName}}</h4>
+                                </div>
+
+
+                            </div>
+                            <div *ngIf="selectedElement.Type==umlTypes.PackageMerge" class="row">
+                                <div class="col-12" *ngIf="selectedElement.MergedPackageName">
+                                    <h4><strong>Package</strong></h4>
+                                    <h4>{{selectedElement.MergedPackageName}}</h4>
+                                </div>
+
+
+                            </div>
+                            <div *ngIf="selectedElement.Kind" class="col-sm-12 col-md-12">
+                                <strong>Kind:</strong> {{selectedElement.Kind}}
+                            </div>
+                            <div *ngIf="selectedElement.Trigger" class="col-sm-12 col-md-12">
+                                <strong>Trigger:</strong> {{selectedElement.Trigger}}
+                            </div>
+                            <div *ngIf="selectedElement.Guard" class="col-sm-12 col-md-12">
+                                <strong>Guard:</strong> {{selectedElement.Guard}}
+                            </div>
+                            <div *ngIf="selectedElement.Entry" class="col-sm-12 col-md-12">
+                                <strong>Entry:</strong> {{selectedElement.Entry}}
+                            </div>
+                            <div *ngIf="selectedElement.Do" class="col-sm-12 col-md-12">
+                                <strong>Do:</strong> {{selectedElement.Do}}
+                            </div>
+                            <div *ngIf="selectedElement.Exit" class="col-sm-12 col-md-12">
+                                <strong>Exit:</strong> {{selectedElement.Exit}}
+                            </div>
+
+                            <div *ngIf="selectedElement.Type==umlTypes.Message" class="row">
+                                <div *ngIf="selectedElement.MessgaeKind" class="col-sm-12 col-md-12">
+                                    <strong>Messgae Kind:</strong> {{selectedElement.MessgaeKind}}
+                                </div>
+                                <div *ngIf="selectedElement.MessgaeSort" class="col-sm-12 col-md-12">
+                                    <strong>Messgae Sort:</strong> {{selectedElement.MessgaeSort}}
+                                </div>
+                                <div *ngIf="selectedElement.ElementFromName" class="col-sm-12 col-md-6">
+                                    <h4><strong>From</strong></h4>
+                                    <h4>{{selectedElement.sElementFromType}} {{selectedElement.ElementFromName}}</h4>
+                                </div>
+                                <div *ngIf="selectedElement.ElementToName" class="col-sm-12 col-md-6">
+                                    <h4><strong>To</strong></h4>
+                                    <h4>{{selectedElement.sElementToType}} {{selectedElement.ElementToName}}</h4>
+                                </div>
+
+
+                            </div>
+                            <h4 *ngIf="selectedElement.ElementName!=null"><strong>Related Element:</strong>
+                                {{selectedElement.ElementName}} ({{selectedElement.sElmenetType}})</h4>
+                            <h4 *ngIf="selectedElement.StereoType!=null"><strong>Stereo Type:</strong>
+                                {{selectedElement.StereoType}}</h4>
+                            <h4 *ngIf="selectedElement.InteractionOperator!=null"><strong>Interaction Operator:
+                                </strong>
+                                {{selectedElement.InteractionOperator}}</h4>
+                            <h4 *ngIf="selectedElement.Expression!=null"><strong>Expression:
+                                </strong>
+                                {{selectedElement.Expression}}</h4>
+                            <mat-accordion class="example-headers-align" multi>
+                                <mat-expansion-panel *ngIf="selectedElement.Attributes">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Attributes
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div *ngIf="selectedElement.Type != umlTypes.Object">
+                                        <h4 *ngFor="let attribute of selectedElement.Attributes">
+                                            {{attribute.Visibility}} {{attribute.DataTypeName}}
+                                            {{attribute.IsArray?'[]':''}}
+                                            {{attribute.Name}}
+                                        </h4>
+                                    </div>
+                                    <div *ngIf="selectedElement.Type == umlTypes.Object">
+                                        <h4 *ngFor="let attribute of selectedElement.Attributes">
+                                            {{attribute.Visibility}} {{attribute.DataTypeName}}
+                                            {{attribute.Name}}
+                                            {{!attribute.isBodyValue?'=':''}} {{attribute.Value}}
+                                        </h4>
+                                    </div>
+
+                                </mat-expansion-panel>
+                                <mat-expansion-panel *ngIf="selectedElement.Operations">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Operations
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+
+                                    <h4 *ngFor="let operation of selectedElement.Operations">
+                                        {{operation.Visibility}} {{operation.DataTypeName}}
+                                        {{operation.IsArray?'[]':''}}
+                                        {{operation.Name}}(
+                                        <span *ngFor="let parameter of operation.Parameters; let i = index"
+                                            [attr.data-index]="i">
+                                            {{parameter.Visibility}} {{parameter.DataTypeName}}
+                                            {{parameter.IsArray?'[]':''}} {{parameter.Name}}{{i
+                                            <operation.Parameters.length-1?',':''}} </span>
+                                                )
+                                    </h4>
+
+                                </mat-expansion-panel>
+                                <!--
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.Associations && selectedElement.Associations.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Associations
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section"
+                                        *ngFor="let item of selectedElement.Associations">
+                                        <div *ngIf="item.Element1Name" class="col-sm-12 col-md-6">
+                                            <h4><strong>{{item.sElement1Type}}:</strong> {{item.Element1Name}}</h4>
+                                            <h4 *ngIf="item.Element1Multiplicity"><strong>Multiplicity:</strong>
+                                                {{item.Element1Multiplicity}}</h4>
+                                            <h4 *ngIf="item.Element1Aggregation"><strong>Aggregation:</strong>
+                                                {{item.Element1Aggregation}}</h4>
+                                        </div>
+                                        <div *ngIf="item.Element2Name" class="col-sm-12 col-md-6">
+                                            <h4><strong>{{item.sElement2Type}}:</strong> {{item.Element2Name}}</h4>
+                                            <h4 *ngIf="item.Element2Multiplicity"><strong>Multiplicity:</strong>
+                                                {{item.Element2Multiplicity}}</h4>
+                                            <h4 *ngIf="item.Element2Aggregation"><strong>Aggregation:</strong>
+                                                {{item.Element2Aggregation}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+                                    </div>
+
+
+                                </mat-expansion-panel>
+                            -->
+
+
+                                <!--
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.Dependencies && selectedElement.Dependencies.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Dependencies
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section"
+                                        *ngFor="let item of selectedElement.Dependencies">
+                                        <div *ngIf="item.SupplierName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Supplier</strong></h4>
+                                            <h4>{{item.sSupplierType}}
+                                                {{item.SupplierName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.ClientName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Client</strong></h4>
+                                            <h4>{{item.sClientType}}
+                                                {{item.ClientName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+
+                                    </div>
+
+
+                                </mat-expansion-panel>-->
+                                <!--
+                                <mat-expansion-panel *ngIf="selectedElement.Usages && selectedElement.Usages.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Usages
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section" *ngFor="let item of selectedElement.Usages">
+                                        <div *ngIf="item.SupplierName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Supplier</strong></h4>
+                                            <h4>{{item.sSupplierType}}
+                                                {{item.SupplierName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.ClientName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Client</strong></h4>
+                                            <h4>{{item.sClientType}}
+                                                {{item.ClientName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+
+                                    </div>
+
+
+                                </mat-expansion-panel>-->
+
+
+                                <!--<mat-expansion-panel
+                                    *ngIf="selectedElement.Realizations && selectedElement.Realizations.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Realizations
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section"
+                                        *ngFor="let item of selectedElement.Realizations">
+                                        <div *ngIf="item.SupplierName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Supplier</strong></h4>
+                                            <h4>{{item.sSupplierType}}
+                                                {{item.SupplierType}}</h4>
+                                        </div>
+                                        <div *ngIf="item.ClientName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Client</strong></h4>
+                                            <h4>{{item.sClientType}}
+                                                {{item.ClientName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+
+                                    </div>
+
+
+                                </mat-expansion-panel>-->
+                                <!--
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.Generalizations && selectedElement.Generalizations.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Generalizations
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section"
+                                        *ngFor="let item of selectedElement.Generalizations">
+                                        <div *ngIf="item.ParentName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Parent</strong></h4>
+                                            <h4>{{item.sParentType}} {{item.ParentName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.ChildName" class="col-sm-12 col-md-6">
+                                            <h4><strong>Child</strong></h4>
+                                            <h4>{{item.sChildType}} {{item.ChildName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+
+                                    </div>
+
+
+                                </mat-expansion-panel>
+                            
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.IncomingMessages && selectedElement.IncomingMessages.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Incoming Messages
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section"
+                                        *ngFor="let item of selectedElement.IncomingMessages">
+                                        <div *ngIf="item.MessgaeKind" class="col-sm-12 col-md-12">
+                                            <strong>Messgae Kind:</strong> {{item.MessgaeKind}}
+                                        </div>
+                                        <div *ngIf="item.MessgaeSort" class="col-sm-12 col-md-12">
+                                            <strong>Messgae Sort:</strong> {{item.MessgaeSort}}
+                                        </div>
+                                        <div *ngIf="item.ElementFromName" class="col-sm-12 col-md-6">
+                                            <h4><strong>From</strong></h4>
+                                            <h4>{{item.sElementFromType}} {{item.ElementFromName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.ElementToName" class="col-sm-12 col-md-6">
+                                            <h4><strong>To</strong></h4>
+                                            <h4>{{item.sElementToType}} {{item.ElementToName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+
+                                    </div>
+
+
+                                </mat-expansion-panel>
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.OutgoingMessages && selectedElement.OutgoingMessages.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Outgoing Messages
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section"
+                                        *ngFor="let item of selectedElement.OutgoingMessages">
+                                        <div *ngIf="item.MessgaeKind" class="col-sm-12 col-md-12">
+                                            <strong>Messgae Kind:</strong> {{item.MessgaeKind}}
+                                        </div>
+                                        <div *ngIf="item.MessgaeSort" class="col-sm-12 col-md-12">
+                                            <strong>Messgae Sort:</strong> {{item.MessgaeSort}}
+                                        </div>
+                                        <div *ngIf="item.ElementFromName" class="col-sm-12 col-md-6">
+                                            <h4><strong>From</strong></h4>
+                                            <h4>{{item.sElementFromType}} {{item.ElementFromName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.ElementToName" class="col-sm-12 col-md-6">
+                                            <h4><strong>To</strong></h4>
+                                            <h4>{{item.sElementToType}} {{item.ElementToName}}</h4>
+                                        </div>
+                                        <div *ngIf="item.StereoType" class="attributes-section col-12">
+                                            <h4><strong>Stereo Type:</strong> {{item.StereoType}}</h4>
+                                        </div>
+
+                                    </div>
+
+
+                                </mat-expansion-panel>
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.ImportedPackages && selectedElement.ImportedPackages.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Imported Packages
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section">
+                                        <div class="col-12">
+                                            <h4><strong>Package</strong></h4>
+                                        </div>
+                                        <div class="col-12" *ngFor="let item of selectedElement.ImportedPackages">
+                                            <div *ngIf="item.ImportedPackageName">
+
+                                                <h4>{{item.ImportedPackageName}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+                                </mat-expansion-panel>
+                                <mat-expansion-panel
+                                    *ngIf="selectedElement.MergedPackage && selectedElement.MergedPackage.length>0">
+                                    <mat-expansion-panel-header>
+                                        <mat-panel-title>
+                                            Merged Packages
+                                        </mat-panel-title>
+
+                                    </mat-expansion-panel-header>
+                                    <div class="row attributes-section">
+                                        <div class="col-12">
+                                            <h4><strong>Package</strong></h4>
+                                        </div>
+
+                                        <div class="col-12" *ngFor="let item of selectedElement.MergedPackage">
+                                            <div *ngIf="item.MergedPackageName">
+
+                                                <h4>{{item.MergedPackageName}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+                                </mat-expansion-panel>-->
+
+                            </mat-accordion>
+
+                        </mat-card-content>
+                        <mat-card-actions>
+
+                        </mat-card-actions>
+                    </mat-card>
+                    <br/>
+                </div>
+                <div class="col-md-12 col-sm-12" style="overflow: auto;">
+
+                    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+                        <!-- This is the tree node template for leaf nodes -->
+                        <mat-tree-node class="{{node.selected?'selected-node':''}} tree-node" *matTreeNodeDef="let node"
+                            matTreeNodePadding>
+                            <!-- use a disabled button to provide padding for tree leaf -->
+                            <button mat-icon-button disabled></button>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Outgoing'">
+
+                                east
+
+                            </mat-icon>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Incoming'">
+
+                                west
+
+                            </mat-icon>
+                            {{node.name}}
+                            <button (click)="selectTreeNode(node)" *ngIf="node.item.IsElementDetail" mat-icon-button
+                                [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    read_more
+                                </mat-icon>
+
+                            </button>
+                        </mat-tree-node>
+                        <!-- This is the tree node template for expandable nodes -->
+                        <mat-tree-node *matTreeNodeDef="let node;when: hasChild"
+                            class="{{node.selected?'selected-node':''}} tree-node" matTreeNodePadding>
+                            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                                </mat-icon>
+
+                            </button>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Outgoing'">
+
+                                east
+
+                            </mat-icon>
+                            <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.item.Direction=='Incoming'">
+
+                                west
+
+                            </mat-icon>
+                            {{node.name}}
+                            <button (click)="selectTreeNode(node)" *ngIf="node.item.IsElementDetail" mat-icon-button
+                                [attr.aria-label]="'Toggle ' + node.name">
+                                <mat-icon class="mat-icon-rtl-mirror">
+                                    read_more
+                                </mat-icon>
+
+                            </button>
+                        </mat-tree-node>
+                    </mat-tree>
+
+                </div>
+                
+            </div>
+            <!--<div class="row">
+                <ol class="breadcrumb breadcrumb-arrow">
+                    <li><a (click)="navigateToTop()">
+                            <fa-icon [icon]="faHome"></fa-icon>
+                        </a></li>
+
+                    <li (click)="navigateElement(item)" *ngFor="let item of currentParents" class="">
+                        <a>{{item.Name}}</a>
+                    </li>
+
+                </ol>
+
+            </div>
+            <div class="row">
+                <div *ngFor="let item of currentElements">
+                    <div *ngIf="item.Type==umlTypes.Class" class="card text-white bg-dark mb-3" style="width: 18rem;">
+                        <div class="card-header">
+                            Class
+                        </div>
+                        <div class="card-body">
+
+                            <h4 class="card-title">{{item.Visibility}} class {{item.Name}}</h4>
+                            <div *ngIf="item.Attributes" class="attributes-section">
+                                <h5><strong>Attributes</strong></h5>
+                                <h5 *ngFor="let attribute of item.Attributes">
+                                    {{attribute.Visibility}} {{attribute.DataTypeName}} {{attribute.IsArray?'[]':''}}
+                                    {{attribute.Name}}
+                                </h5>
+                            </div>
+                            <div *ngIf="item.Operations" class="attributes-section">
+                                <h5><strong>Operations</strong></h5>
+                                <h5 *ngFor="let operation of item.Operations">
+                                    {{operation.Visibility}} {{operation.DataTypeName}} {{operation.IsArray?'[]':''}}
+                                    {{operation.Name}}(
+                                    <span *ngFor="let parameter of operation.Parameters; let i = index"
+                                        [attr.data-index]="i">
+                                        {{parameter.Visibility}} {{parameter.DataTypeName}}
+                                        {{parameter.IsArray?'[]':''}} {{parameter.Name}}{{i
+                                        <operation.Parameters.length-1?',':''}} </span>
+                                            )
+                                </h5>
+                            </div>
+
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs !=null && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.Object" class="card text-white bg-dark mb-3" style="width: 18rem;">
+                        <div class="card-header">
+                            Object
+                        </div>
+                        <div class="card-body">
+
+                            <h4 class="card-title">{{item.Visibility}} {{item.Name}} :{{item.InstancedClassName}} </h4>
+                            <div *ngIf="item.Attributes" class="attributes-section">
+                                <h5><strong>Attributes Usage</strong></h5>
+                                <h5 *ngFor="let attribute of item.Attributes">
+                                    {{attribute.Name}} {{attribute.isBodyValue?'':'='}} {{attribute.Value}}
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs !=null && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.Interface" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Interface
+                        </div>
+                        <div class="card-body">
+
+                            <h4 class="card-title">{{item.Visibility}} interface {{item.Name}}</h4>
+                            <div *ngIf="item.Attributes" class="attributes-section">
+                                <h5><strong>Attributes</strong></h5>
+                                <h5 *ngFor="let attribute of item.Attributes">
+                                    {{attribute.Visibility}} {{attribute.DataTypeName}} {{attribute.IsArray?'[]':''}}
+                                    {{attribute.Name}}
+                                </h5>
+                            </div>
+                            <div *ngIf="item.Operations" class="attributes-section">
+                                <h5><strong>Operations</strong></h5>
+                                <h5 *ngFor="let operation of item.Operations">
+                                    {{operation.Visibility}} {{operation.DataTypeName}} {{operation.IsArray?'[]':''}}
+                                    {{operation.Name}}(
+                                    <span *ngFor="let parameter of operation.Parameters; let i = index"
+                                        [attr.data-index]="i">
+                                        {{parameter.Visibility}} {{parameter.DataTypeName}}
+                                        {{parameter.IsArray?'[]':''}} {{parameter.Name}}{{i
+                                        <operation.Parameters.length-1?',':''}} </span>
+                                            )
+                                </h5>
+                            </div>
+
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.InnerClass" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Inner Class
+                        </div>
+                        <div class="card-body">
+
+                            <h4 class="card-title">{{item.Visibility}} class {{item.Name}}</h4>
+                            <div *ngIf="item.Attributes" class="attributes-section">
+                                <h5><strong>Attributes</strong></h5>
+                                <h5 *ngFor="let attribute of item.Attributes">
+                                    {{attribute.Visibility}} {{attribute.DataTypeName}} {{attribute.IsArray?'[]':''}}
+                                    {{attribute.Name}}
+                                </h5>
+                            </div>
+                            <div *ngIf="item.Operations" class="attributes-section">
+                                <h5><strong>Operations</strong></h5>
+                                <h5 *ngFor="let operation of item.Operations">
+                                    {{operation.Visibility}} {{operation.DataTypeName}} {{operation.IsArray?'[]':''}}
+                                    {{operation.Name}}(
+                                    <span *ngFor="let parameter of operation.Parameters; let i = index"
+                                        [attr.data-index]="i">
+                                        {{parameter.Visibility}} {{parameter.DataTypeName}}
+                                        {{parameter.IsArray?'[]':''}} {{parameter.Name}}{{i
+                                        <operation.Parameters.length-1?',':''}} </span>
+                                            )
+                                </h5>
+                            </div>
+                            <div class="card-footer d-flex flex-row-reverse">
+                                <button type="button" class="btn text-white btn-default"
+                                    *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                    aria-label="Left Align">
+                                    <fa-icon [icon]="faChevronRight"></fa-icon>
+                                </button>
+                            </div>
+
+
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.InnerInterface" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Inner Interface
+                        </div>
+                        <div class="card-body">
+
+                            <h4 class="card-title">{{item.Visibility}} interface {{item.Name}}</h4>
+                            <div *ngIf="item.Attributes" class="attributes-section">
+                                <h5><strong>Attributes</strong></h5>
+                                <h5 *ngFor="let attribute of item.Attributes">
+                                    {{attribute.Visibility}} {{attribute.DataTypeName}} {{attribute.IsArray?'[]':''}}
+                                    {{attribute.Name}}
+                                </h5>
+                            </div>
+                            <div *ngIf="item.Operations" class="attributes-section">
+                                <h5><strong>Operations</strong></h5>
+                                <h5 *ngFor="let operation of item.Operations">
+                                    {{operation.Visibility}} {{operation.DataTypeName}} {{operation.IsArray?'[]':''}}
+                                    {{operation.Name}}(
+                                    <span *ngFor="let parameter of operation.Parameters; let i = index"
+                                        [attr.data-index]="i">
+                                        {{parameter.Visibility}} {{parameter.DataTypeName}}
+                                        {{parameter.IsArray?'[]':''}} {{parameter.Name}}{{i
+                                        <operation.Parameters.length-1?',':''}} </span>
+                                            )
+                                </h5>
+                            </div>
+
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.Generalization" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Generalization
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.ParentName" class="attributes-section">
+                                <h5><strong>Parent</strong></h5>
+                                <h5>{{item.ParentType== umlTypes.Class||item.ParentType==
+                                    umlTypes.InnerClass?'Class':item.ParentType== umlTypes.Interface||item.ParentType==
+                                    umlTypes.InnerInterface?'Interface':''}} {{item.ParentName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.ChildName" class="attributes-section">
+                                <h5><strong>Child</strong></h5>
+                                <h5>{{item.ChildType== umlTypes.Class||item.ChildType==
+                                    umlTypes.InnerClass?'Class':item.ChildType== umlTypes.Interface||item.ChildType==
+                                    umlTypes.InnerInterface?'Interface':''}} {{item.ChildName}}</h5>
+                            </div>
+
+
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="item.Type==umlTypes.Dependency" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Dependency
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.SupplierInterfaceName" class="attributes-section">
+                                <h5><strong>Supplier</strong></h5>
+                                <h5>Interface {{item.SupplierInterfaceName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.ClientClassName" class="attributes-section">
+                                <h5><strong>Client</strong></h5>
+                                <h5>Class {{item.ClientClassName}}</h5>
+                            </div>
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.DependencyPackage" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Package Dependency
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.SupplierPackageName" class="attributes-section">
+                                <h5><strong>Supplier</strong></h5>
+                                <h5>Package {{item.SupplierPackageName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.ClientPackageName" class="attributes-section">
+                                <h5><strong>Client</strong></h5>
+                                <h5>Package {{item.ClientPackageName}}</h5>
+                            </div>
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.DependencyObject" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Object Dependency
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.SupplierObjectName" class="attributes-section">
+                                <h5><strong>Supplier</strong></h5>
+                                <h5>Object {{item.SupplierObjectName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.ClientObjectName" class="attributes-section">
+                                <h5><strong>Client</strong></h5>
+                                <h5>Object {{item.ClientObjectName}}</h5>
+                            </div>
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="item.Type==umlTypes.Realization" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Realization
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.SupplierName" class="attributes-section">
+                                <h5><strong>Supplier</strong></h5>
+                                <h5>{{item.SupplierType== umlTypes.Class||item.SupplierType==
+                                    umlTypes.InnerClass?'Class':item.SupplierType==
+                                    umlTypes.Interface||item.SupplierType== umlTypes.InnerInterface?'Interface':''}}
+                                    {{item.SupplierName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.ClientName" class="attributes-section">
+                                <h5><strong>Client</strong></h5>
+                                <h5>{{item.ClientType== umlTypes.Class||item.ClientType==
+                                    umlTypes.InnerClass?'Class':item.ClientType== umlTypes.Interface||item.ClientType==
+                                    umlTypes.InnerInterface?'Interface':''}} {{item.ClientName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.Usage" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Usage
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.SupplierName" class="attributes-section">
+                                <h5><strong>Supplier</strong></h5>
+                                <h5>{{item.SupplierType== umlTypes.Class||item.SupplierType==
+                                    umlTypes.InnerClass?'Class':item.SupplierType==
+                                    umlTypes.Interface||item.SupplierType== umlTypes.InnerInterface?'Interface':item.SupplierType== umlTypes.Package?'Package':''}}
+                                    {{item.SupplierName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.ClientName" class="attributes-section">
+                                <h5><strong>Client</strong></h5>
+                                <h5>{{item.ClientType== umlTypes.Class||item.ClientType==
+                                    umlTypes.InnerClass?'Class':item.ClientType== umlTypes.Interface||item.ClientType==
+                                    umlTypes.InnerInterface?'Interface':''}} {{item.ClientName}}</h5>
+                            </div>
+
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="item.Type==umlTypes.Association" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Association
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.Class1Name" class="attributes-section">
+                                <h5><strong>Class {{item.Class1Name}}</strong></h5>
+                                <h5 *ngIf="item.Class1Multiplicity"><strong>Multiplicity:</strong>
+                                    {{item.Class1Multiplicity}}</h5>
+                                <h5 *ngIf="item.Class1Aggregation"><strong>Aggregation:</strong>
+                                    {{item.Class1Aggregation}}</h5>
+                            </div>
+                            <div *ngIf="item.Class2Name" class="attributes-section">
+                                <h5><strong>{{item.Class2Name}}</strong></h5>
+                                <h5 *ngIf="item.Class2Multiplicity"><strong>Multiplicity:</strong>
+                                    {{item.Class2Multiplicity}}</h5>
+                                <h5 *ngIf="item.Class2Aggregation"><strong>Aggregation:</strong>
+                                    {{item.Class2Aggregation}}</h5>
+                            </div>
+
+
+
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.AssociationObject" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Object Association
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.Object1Name" class="attributes-section">
+                                <h5><strong>Object {{item.Object1Name}}</strong></h5>
+                                <h5 *ngIf="item.Object1Multiplicity"><strong>Multiplicity:</strong>
+                                    {{item.Object1Multiplicity}}</h5>
+                                <h5 *ngIf="item.Object1Aggregation"><strong>Aggregation:</strong>
+                                    {{item.Object1Aggregation}}</h5>
+                            </div>
+                            <div *ngIf="item.Object2Name" class="attributes-section">
+                                <h5><strong>Object {{item.Object2Name}}</strong></h5>
+                                <h5 *ngIf="item.Object2Multiplicity"><strong>Multiplicity:</strong>
+                                    {{item.Object2Multiplicity}}</h5>
+                                <h5 *ngIf="item.Object2Aggregation"><strong>Aggregation:</strong>
+                                    {{item.Object2Aggregation}}</h5>
+                            </div>
+
+
+
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.AssociationPackage" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Package Association
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.Package1Name" class="attributes-section">
+                                <h5><strong>Package {{item.Package1Name}}</strong></h5>
+                                <h5 *ngIf="item.Package1Multiplicity"><strong>Multiplicity:</strong>
+                                    {{item.Package1Multiplicity}}</h5>
+                                <h5 *ngIf="item.Package1Aggregation"><strong>Aggregation:</strong>
+                                    {{item.Package1Aggregation}}</h5>
+                            </div>
+                            <div *ngIf="item.Package2Name" class="attributes-section">
+                                <h5><strong>Package {{item.Package2Name}}</strong></h5>
+                                <h5 *ngIf="item.Package2Multiplicity"><strong>Multiplicity:</strong>
+                                    {{item.Package2Multiplicity}}</h5>
+                                <h5 *ngIf="item.Package2Aggregation"><strong>Aggregation:</strong>
+                                    {{item.Package2Aggregation}}</h5>
+                            </div>
+
+
+
+                            <div *ngIf="item.StereoType" class="attributes-section">
+                                <h5><strong>Stereo Type:</strong> {{item.StereoType}}</h5>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.PackageImport" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Package Import
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.ImportedPackageName" class="attributes-section">
+                                <h5><strong>Imported Package {{item.ImportedPackageName}}</strong></h5>
+                            </div>
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.PackageMerge" class="card text-white bg-dark mb-3"
+                        style="width: 18rem;">
+                        <div class="card-header">
+                            Package Merge
+                        </div>
+                        <div class="card-body">
+
+                            <div *ngIf="item.MergedPackageName" class="attributes-section">
+                                <h5><strong>Merged Package {{item.MergedPackageName}}</strong></h5>
+                            </div>
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div *ngIf="item.Type==umlTypes.Package" class="card text-white bg-dark mb-3" style="width: 18rem;">
+                        <div class="card-header">
+                            Package
+                        </div>
+                        <div class="card-body">
+
+                            <h4 class="card-title">{{item.Visibility}} {{item.Name}}</h4>
+
+
+
+                        </div>
+                        <div class="card-footer d-flex flex-row-reverse">
+                            <button type="button" class="btn text-white btn-default"
+                                *ngIf="item.Childs && item.Childs.length>0" (click)="navigateElement(item)"
+                                aria-label="Left Align">
+                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>-->
+            <div class="row">
+                <div class="col-12">
+                    <button class="btn btn-primary" (click)="cancelUpload()">Cancel</button>
+                    <button class="align-right btn btn-primary" (click)="saveData()">Save</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div *ngIf="isLoading">
+        <mat-spinner></mat-spinner>
+    </div>
+</div>

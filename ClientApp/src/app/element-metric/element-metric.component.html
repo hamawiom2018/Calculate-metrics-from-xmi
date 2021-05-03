@@ -1,0 +1,56 @@
+<h1 mat-dialog-title>Metrics for {{elementRef.element.Name}}</h1>
+<div mat-dialog-content>
+    <div class="row" *ngIf="isLoading">
+        <div class="col-12">
+            <mat-spinner></mat-spinner>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="!isLoading">
+        <div class="col-12">
+
+            <div class="row">
+                <div class="col-4">
+                    <mat-form-field class="example-full-width">
+                        <mat-label>Metric</mat-label>
+                        <input type="text" placeholder="Search for metric" aria-label="Number" matInput
+                            [formControl]="myControl" [matAutocomplete]="auto">
+                        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" [displayWith]="getOptionText"
+                            (optionSelected)='getMetric($event.option.value)'>
+                            <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+                                <span class="option-title"> {{option.metricCode}}</span><br />
+                                <span class="option-description">{{option.metricName}}</span>
+                            </mat-option>
+                        </mat-autocomplete>
+                    </mat-form-field>
+                </div>
+                <div class="col-8">
+                    <button *ngIf="selectedMetric!=null && !isLoadingEvaluate" mat-button (click)="evaluate()">
+                        Evaluate
+                    </button>
+                    <mat-spinner *ngIf="isLoadingEvaluate"></mat-spinner>
+                    <span *ngIf=" !isLoadingEvaluate && isMetricEvaluated">{{evaluatedNumber}}</span>
+                </div>
+
+
+
+            </div>
+            <div class="row" *ngIf="selectedMetric!=null">
+                <div class="col-12">
+                    <span class="metric-title">Metric Name: </span><span
+                        class="metric-description">{{selectedMetric.metricName}}</span><br />
+                    <br />
+                    <span class="metric-title">Metric Description: </span><span
+                        class="metric-description">{{selectedMetric.metricDescription}}</span>
+                </div>
+            </div>
+            <br />
+        </div>
+
+    </div>
+
+</div>
+<div mat-dialog-actions>
+
+    <button mat-button [mat-dialog-close]="elementRef">Close</button>
+</div>

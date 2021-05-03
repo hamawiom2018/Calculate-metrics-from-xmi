@@ -1,0 +1,45 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h1>My Diagrams</h1>
+    </div>
+  </div>
+  <div *ngIf="isLoading" class="row">
+    <div class="col-12">
+
+      <mat-spinner></mat-spinner>
+
+    </div>
+  </div>
+  <div *ngIf="!isLoading" class="row">
+    <div class="col-12">
+
+
+      <table class='table table-striped' >
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Diagram Name</th>
+            <th>Created Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let diagram of diagramData">
+            <td>{{ diagram.uploadName }}</td>
+            <td>{{ diagram.diagramName }}</td>
+            <td>{{ diagram.createdDate | date:'MM/d/yyyy, h:mm a' }}</td>
+            <td><button [routerLink]="[ '/diagram', diagram.id ]" mat-icon-button aria-label="details">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <button (click)="deleteDiagram(diagram)" mat-icon-button aria-label="delete">
+              <mat-icon>delete</mat-icon>
+            </button></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+</div>
